@@ -6,7 +6,7 @@
 extern struct led_desc led1;
 extern struct led_desc led2;
 extern struct led_desc led3;
-	
+
 /* 板上初始化函数 */
 void board_lowlevel_init();
 
