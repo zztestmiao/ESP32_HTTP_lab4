@@ -8,11 +8,10 @@ uint32_t uart_link_us(void)
     return TIM_GetCounter(TIM2);
 }
 
-bool uart_link_init(void)
+/* TIM2每微秒计数一次，供串口与AT应答超时使用。 */
+static bool uart_timer_init(void)
 {
     RCC_ClocksTypeDef clocks;
-    GPIO_InitTypeDef gpio;
-    USART_InitTypeDef uart;
     TIM_TimeBaseInitTypeDef timer;
     uint32_t timer_clock;
     RCC_GetClocksFreq(&clocks);
@@ -22,15 +21,18 @@ bool uart_link_init(void)
     if (timer_clock < 1000000u || timer_clock % 1000000u != 0u ||
         timer_clock / 1000000u > 65536u)
         return false;
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2 | RCC_APB1Periph_TIM2, ENABLE);
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
     TIM_TimeBaseStructInit(&timer);
     timer.TIM_Prescaler = (uint16_t)(timer_clock / 1000000u - 1u);
     timer.TIM_Period = 0xFFFFFFFFu;
     TIM_TimeBaseInit(TIM2, &timer);
     TIM_SetCounter(TIM2, 0u);
     TIM_Cmd(TIM2, ENABLE);
+    return true;
+}
+
+static void uart_io_init(void)
+{
+    GPIO_InitTypeDef gpio;
     GPIO_StructInit(&gpio);
     gpio.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_9 | GPIO_Pin_10;
     gpio.GPIO_Mode = GPIO_Mode_AF;
@@ -42,6 +44,12 @@ bool uart_link_init(void)
     GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_USART2);
     GPIO_PinAFConfig(GPIOA, GPIO_PinSource9, GPIO_AF_USART1);
     GPIO_PinAFConfig(GPIOA, GPIO_PinSource10, GPIO_AF_USART1);
+}
+
+/* USART1日志与USART2 AT统一使用115200、8N1，无硬件流控。 */
+static void uart_usart_init(void)
+{
+    USART_InitTypeDef uart;
     USART_DeInit(USART1);
     USART_DeInit(USART2);
     USART_StructInit(&uart);
@@ -51,31 +59,45 @@ bool uart_link_init(void)
     USART_Init(USART2, &uart);
     USART_Cmd(USART1, ENABLE);
     USART_Cmd(USART2, ENABLE);
+}
+
+bool uart_link_init(void)
+{
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2 | RCC_APB1Periph_TIM2, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+    if (!uart_timer_init())
+        return false;
+    uart_io_init();
+    uart_usart_init();
     return true;
 }
 
-static bool uart_send(USART_TypeDef *port, const char *text)
+/* 共用一个等待函数：硬件异常时最多等待2ms，避免永久卡住。
+ * TXE表示发送缓冲可写；TC表示最后一个字节已经离开发送引脚。 */
+static bool uart_wait_flag(USART_TypeDef *port, uint16_t flag)
 {
-    uint32_t started;
-    if (text == 0)
-        return false;
-    while (*text != '\0')
-    {
-        started = uart_link_us();
-        while (USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET)
-        {
-            if ((uint32_t)(uart_link_us() - started) >= 2000u)
-                return false;
-        }
-        USART_SendData(port, (uint8_t)*text++);
-    }
-    started = uart_link_us();
-    while (USART_GetFlagStatus(port, USART_FLAG_TC) == RESET)
+    uint32_t started = uart_link_us();
+    while (USART_GetFlagStatus(port, flag) == RESET)
     {
         if ((uint32_t)(uart_link_us() - started) >= 2000u)
             return false;
     }
     return true;
+}
+
+/* 发送文本，不发送结尾零。初始化后串行调用；失败可能已发送部分字符。 */
+static bool uart_send(USART_TypeDef *port, const char *text)
+{
+    if (text == 0)
+        return false;
+    while (*text != '\0')
+    {
+        if (!uart_wait_flag(port, USART_FLAG_TXE))
+            return false;
+        USART_SendData(port, (uint8_t)*text++);
+    }
+    return uart_wait_flag(port, USART_FLAG_TC);
 }
 
 bool uart_at_send(const char *text)
