@@ -6,6 +6,7 @@
 #include "wifi_test.h"
 #include "esp_at.h"
 #include "http_test.h"
+#include "http_flash_test.h"
 
 /* 程序入口：初始化 LED，执行 AT 和版本测试，通过后测试 WiFi，最后启动 LED 心跳并循环等待。 */
 int main(void)
@@ -25,6 +26,6 @@ int main(void)
     app_timer_start();
     while (1)
     {
-        __NOP();
+        http_flash_test_poll();
     }
 }

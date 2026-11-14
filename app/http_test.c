@@ -23,7 +23,7 @@ static uint32_t http_test_crc(const uint8_t *data, uint32_t length)
 {
     uint32_t crc = 0xFFFFFFFFu;
     uint32_t i, bit;
-    /* 前8字节按特制图样，其余为下标低8位，逐字节检查漏字节或错位。 */
+    /* 每个字节参与8轮位运算，CRC与测试图样规则无关。 */
     for (i = 0u; i < length; ++i)
     {
         crc ^= data[i];

@@ -419,6 +419,7 @@
               <FileType>1</FileType>
               <FilePath>..\app\http_test.c</FilePath>
             </File>
+              <File><FileName>http_flash_test.c</FileName><FileType>1</FileType><FilePath>..\app\http_flash_test.c</FilePath></File>
           </Files>
         </Group>
         <Group>
@@ -429,6 +430,7 @@
               <FileType>1</FileType>
               <FilePath>..\driver\led.c</FilePath>
             </File>
+              <File><FileName>w25q.c</FileName><FileType>1</FileType><FilePath>..\driver\w25q.c</FilePath></File>
             <File>
               <FileName>uart_link.c</FileName>
               <FileType>1</FileType>
