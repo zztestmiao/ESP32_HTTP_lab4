@@ -1,8 +1,6 @@
 #include "uart_link.h"
 #include "stm32f4xx.h"
 
-volatile uint32_t g_uart_log_failures;
-
 uint32_t uart_link_us(void)
 {
     return TIM_GetCounter(TIM2);
@@ -73,31 +71,18 @@ bool uart_link_init(void)
     return true;
 }
 
-/* 共用一个等待函数：硬件异常时最多等待2ms，避免永久卡住。
- * TXE表示发送缓冲可写；TC表示最后一个字节已经离开发送引脚。 */
-static bool uart_wait_flag(USART_TypeDef *port, uint16_t flag)
-{
-    uint32_t started = uart_link_us();
-    while (USART_GetFlagStatus(port, flag) == RESET)
-    {
-        if ((uint32_t)(uart_link_us() - started) >= 2000u)
-            return false;
-    }
-    return true;
-}
-
-/* 发送文本，不发送结尾零。初始化后串行调用；失败可能已发送部分字符。 */
+/* Blocking transmit; TXE indicates that the data register can accept a byte. */
 static bool uart_send(USART_TypeDef *port, const char *text)
 {
     if (text == 0)
         return false;
     while (*text != '\0')
     {
-        if (!uart_wait_flag(port, USART_FLAG_TXE))
-            return false;
+        while (USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET)
+            ;
         USART_SendData(port, (uint8_t)*text++);
     }
-    return uart_wait_flag(port, USART_FLAG_TC);
+    return true;
 }
 
 bool uart_at_send(const char *text)
@@ -124,6 +109,5 @@ int uart_at_receive(uint8_t *out)
 
 void uart_log(const char *text)
 {
-    if (!uart_send(USART1, text))
-        ++g_uart_log_failures;
+    (void)uart_send(USART1, text);
 }

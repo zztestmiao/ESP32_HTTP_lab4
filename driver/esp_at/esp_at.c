@@ -102,16 +102,6 @@ bool esp_at_init(void)
     return initialized;
 }
 
-bool esp_at_get_version(void)
-{
-    if (!initialized)
-    {
-        rxresult = ESP_AT_RESULT_UART_ERROR;
-        return false;
-    }
-    return esp_at_write_command("AT+GMR\r\n", ESP_AT_COMMAND_TIMEOUT_US);
-}
-
 esp_at_result_t esp_at_get_last_result(void)
 {
     return rxresult;
@@ -131,6 +121,12 @@ static bool esp_at_command_ready(void)
         return false;
     }
     return true;
+}
+
+bool esp_at_get_version(void)
+{
+    return esp_at_command_ready() &&
+           esp_at_write_command("AT+GMR\r\n", ESP_AT_COMMAND_TIMEOUT_US);
 }
 
 bool esp_at_wifi_init(void)
