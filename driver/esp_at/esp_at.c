@@ -1,3 +1,4 @@
+/* 阅读提示：AT驱动：普通命令按完整行识别应答；HTTP正文按声明长度接收，不能混用字符串解析。 */
 /** @file esp_at.c
  * 分层：at_test组织实验 → 本模块组织AT命令/完整行应答 → uart_link单字节收发。
  * USART2 PA2 TX→ESP IO6 RX，ESP IO7 TX→PA3 RX，115200 8N1。
@@ -12,13 +13,13 @@
 
 #define ESP_AT_RESPONSE_SIZE 2048u
 #define ESP_AT_COMMAND_TIMEOUT_US 3000000u
-
 static char rxbuf[ESP_AT_RESPONSE_SIZE];
 static esp_at_result_t rxresult;
 static bool initialized;
 
 /* 完整行匹配，避免模块回显中的部分字符串被误当终止应答。
  * 普通版本行不匹配，仍保留在rxbuf供上层查看。 */
+
 /* 识别完整响应行中的 OK、ERROR 和 busy；其他行返回 NONE，继续接收。 */
 static esp_at_result_t esp_at_match_ack(const char *line)
 {
@@ -35,6 +36,7 @@ static esp_at_result_t esp_at_match_ack(const char *line)
  * timeout_us为真实微秒期限，TIM2提供计时。底层发送采用阻塞方式。
  * 每收到一个完整行尝试匹配，溢出/串口错误立即失败，不截断后冒充成功。
  * 返回bool便于业务判断，具体失败原因通过last_result查询。 */
+
 /* 发送 AT 命令并轮询接收，command 必须包含末尾的回车换行；timeout_us 单位为微秒。
  * 发送结束后开始应答计时；每收到完整行就检查结果，只有 OK 返回 true。
  * 超时、模块报错、接收错误或缓冲满均返回 false；rxbuf 和 rxresult 保存本次应答及结果。 */
@@ -121,6 +123,7 @@ const char *esp_at_get_response(void)
 }
 
 /* 发送之前先确认基础AT探测完成，避免尚未初始化TIM2就调用等待。 */
+
 /* 检查 AT 探测是否成功；未就绪时设置 UART_ERROR 并返回 false。 */
 static bool esp_at_command_ready(void)
 {
@@ -152,6 +155,7 @@ bool esp_at_wifi_init(void)
 
 /* 返回转义后的字节数，非法或空间不足返回0xFFFFFFFF。
  * 控制字符会破坏AT文本命令边界，因此拒绝，而不是直接拼接。 */
+
 /* 转义 WiFi 参数中的逗号、双引号和反斜杠，拒绝控制字符。
  * capacity 包含结尾零的空间；返回输出字节数，非法字符或空间不足返回 0xFFFFFFFF。 */
 static uint32_t esp_at_escape(char *out, uint32_t capacity, const char *text)
@@ -234,4 +238,131 @@ bool esp_at_get_ip(char *ip, uint32_t capacity)
         return false;
     snprintf(ip, capacity, "%u.%u.%u.%u", a, b, c, d);
     return true;
+}
+
+/* HTTP应答中只在控制文本区找终止行，数据区严格消耗声明字节数。
+ * 当前用于已知小文件初测，HTTP状态码由ESP处理，文件正确性由上层CRC确认。
+ * 正式下载需明确状态码、长度、重定向及流控，不能直接边推送边阻塞擦Flash。 */
+bool esp_at_http_get(const char *url, uint8_t *buffer, uint32_t capacity, uint32_t *length)
+{
+    /* command发送AT文本；line只收控制帧，不保存二进制正文。 */
+    char command[224];
+    char line[96];
+    const char prefix[] = "+HTTPCGET:";
+    /* used是正文总字节数；remaining是当前分段还剩的字节数。 */
+    uint32_t used = 0u;
+    uint32_t line_length = 0u;
+    uint32_t remaining = 0u;
+    uint32_t chunk;
+    uint32_t i;
+    uint32_t started;
+    uint8_t byte;
+    int received;
+    bool seen_data = false;
+    if (!esp_at_command_ready())
+        return false;
+    if (url == 0 || buffer == 0 || length == 0 || capacity == 0u ||
+        strlen(url) > 160u || strncmp(url, "http://", 7u) != 0)
+    {
+        rxresult = ESP_AT_RESULT_PARAMETER;
+        return false;
+    }
+    for (i = 0u; url[i] != '\0'; ++i)
+    {
+        if ((uint8_t)url[i] <= 32u || url[i] == '"' || url[i] == ',' || url[i] == '\\')
+        {
+            rxresult = ESP_AT_RESULT_PARAMETER;
+            return false;
+        }
+    }
+    *length = 0u;
+    rxbuf[0] = '\0';
+    /* ESP网络超时10000毫秒，下方STM32总期限为20秒，注意单位区别。 */
+    snprintf(command, sizeof(command), "AT+HTTPCGET=\"%s\",2048,512,10000\r\n", url);
+    rxresult = ESP_AT_RESULT_NONE;
+    if (!uart_at_send(command))
+    {
+        rxresult = ESP_AT_RESULT_UART_ERROR;
+        goto fail;
+    }
+    started = uart_link_us();
+    while ((uint32_t)(uart_link_us() - started) < 20000000u)
+    {
+        received = uart_at_receive(&byte);
+        if (received < 0)
+        {
+            rxresult = ESP_AT_RESULT_UART_ERROR;
+            goto fail;
+        }
+        if (received == 0)
+            continue;
+        /* 正文状态：00、OK和换行都只当数据，按数量收完才切回控制状态。 */
+        if (remaining != 0u)
+        {
+            buffer[used++] = byte;
+            --remaining;
+            continue;
+        }
+        /* 控制状态：只在这里识别帧头及终止行，并给字符串结尾留空间。 */
+        if (line_length + 1u >= sizeof(line))
+        {
+            rxresult = ESP_AT_RESULT_PROTOCOL;
+            goto fail;
+        }
+        line[line_length++] = (char)byte;
+        line[line_length] = '\0';
+        /* 识别+HTTPCGET:长度,，逗号后严格接收该长度的原始数据。 */
+        if (byte == ',' && line_length > sizeof(prefix) - 1u &&
+            strncmp(line, prefix, sizeof(prefix) - 1u) == 0)
+        {
+            /* 十进制转长度，乘10前检查溢出，防止错误值绕过容量限制。 */
+            chunk = 0u;
+            for (i = sizeof(prefix) - 1u; i + 1u < line_length; ++i)
+            {
+                if (line[i] < '0' || line[i] > '9' ||
+                    chunk > (0xFFFFFFFFu - (uint32_t)(line[i] - '0')) / 10u)
+                {
+                    rxresult = ESP_AT_RESULT_PROTOCOL;
+                    goto fail;
+                }
+                chunk = chunk * 10u + (uint32_t)(line[i] - '0');
+            }
+            if (i == sizeof(prefix) - 1u || chunk > capacity - used)
+            {
+                rxresult = ESP_AT_RESULT_OVERFLOW;
+                goto fail;
+            }
+            /* 确认本段放得下后进入正文状态，多段共享used连续追加。 */
+            remaining = chunk;
+            seen_data = true;
+            line_length = 0u;
+            continue;
+        }
+        if (byte == '\n')
+        {
+            if (strcmp(line, "OK\r\n") == 0)
+            {
+                if (!seen_data || remaining != 0u)
+                {
+                    rxresult = ESP_AT_RESULT_PROTOCOL;
+                    goto fail;
+                }
+                /* 只有完整应答成功才发布有效长度，失败数据不能用于升级。 */
+                *length = used;
+                rxresult = ESP_AT_RESULT_OK;
+                return true;
+            }
+            if (strcmp(line, "ERROR\r\n") == 0 || strncmp(line, "busy ", 5u) == 0)
+            {
+                rxresult = ESP_AT_RESULT_ERROR;
+                goto fail;
+            }
+            line_length = 0u;
+        }
+    }
+    rxresult = ESP_AT_RESULT_TIMEOUT;
+fail:
+    /* 失败后串口可能还有未消费的二进制，禁止继续按普通文本命令解析。 */
+    initialized = false;
+    return false;
 }

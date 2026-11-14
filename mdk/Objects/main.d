@@ -38,5 +38,6 @@
 .\objects\main.o: ..\app\app_timer.h
 .\objects\main.o: ..\app\at_test.h
 .\objects\main.o: ..\app\wifi_test.h
-.\objects\main.o: ..\driver\esp_at\esp_at.h
 .\objects\main.o: D:\Keil5\Core\ARM\ARMCC\Bin\..\include\stdbool.h
+.\objects\main.o: ..\driver\esp_at\esp_at.h
+.\objects\main.o: ..\app\http_test.h

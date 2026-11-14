@@ -1,3 +1,4 @@
+/* 阅读提示：底层传输：配置USART1/2与TIM2，提供有限等待的发送及非阻塞单字节接收。 */
 #include "uart_link.h"
 #include "stm32f4xx.h"
 
@@ -8,6 +9,7 @@ uint32_t uart_link_us(void)
 }
 
 /* TIM2每微秒计数一次，供串口与AT应答超时使用。 */
+
 /* 配置 TIM2 每微秒计数一次，供 AT 应答超时使用；时钟无法整分频时返回 false。 */
 static bool uart_timer_init(void)
 {
@@ -48,6 +50,7 @@ static void uart_io_init(void)
 }
 
 /* USART1日志与USART2 AT统一使用115200、8N1，无硬件流控。 */
+
 /* 初始化两个串口：115200 波特率、8 位数据、无校验、1 位停止位，开启收发。 */
 static void uart_usart_init(void)
 {

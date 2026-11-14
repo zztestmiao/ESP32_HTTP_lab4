@@ -1,8 +1,8 @@
 .\objects\wifi_test.o: ..\app\wifi_test.c
 .\objects\wifi_test.o: ..\app\wifi_test.h
+.\objects\wifi_test.o: D:\Keil5\Core\ARM\ARMCC\Bin\..\include\stdbool.h
 .\objects\wifi_test.o: ..\app\wifi_config.h
 .\objects\wifi_test.o: ..\driver\esp_at\esp_at.h
-.\objects\wifi_test.o: D:\Keil5\Core\ARM\ARMCC\Bin\..\include\stdbool.h
 .\objects\wifi_test.o: D:\Keil5\Core\ARM\ARMCC\Bin\..\include\stdint.h
 .\objects\wifi_test.o: ..\driver\console\console.h
 .\objects\wifi_test.o: ..\app\board.h

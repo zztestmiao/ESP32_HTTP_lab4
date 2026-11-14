@@ -5,6 +5,7 @@
 ".\objects\app_timer.o"
 ".\objects\at_test.o"
 ".\objects\wifi_test.o"
+".\objects\http_test.o"
 ".\objects\led.o"
 ".\objects\uart_link.o"
 ".\objects\esp_at.o"

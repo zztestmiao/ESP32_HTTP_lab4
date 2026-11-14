@@ -1,3 +1,4 @@
+/* 阅读提示：联网测试：配置Station→连接热点→确认已获IP→读取地址；不打印密码。 */
 #include "wifi_test.h"
 #include "wifi_config.h"
 #include "esp_at.h"
@@ -58,4 +59,9 @@ fail:
 #else
     console_write("[SKIP] WiFi: configure app/wifi_config.h locally\r\n");
 #endif
+}
+
+bool wifi_test_passed(void)
+{
+    return g_wifi_result == 1u;
 }

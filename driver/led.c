@@ -6,13 +6,10 @@
 //LED1:PB0
 //LED2:PB1
 //LED3:PE9
-
 #define LED1_PORT GPIOB
 #define LED1_PIN  GPIO_Pin_0
-
 #define LED2_PORT GPIOB
 #define LED2_PIN  GPIO_Pin_1
-
 #define LED3_PORT GPIOE
 #define LED3_PIN  GPIO_Pin_9
 
@@ -30,20 +27,16 @@ void cpu_delay(void)
 void led_init(led_desc_t led)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
-	
 	//可以直接给结构体全部赋初始值
 	GPIO_StructInit(&GPIO_InitStructure);
-
 	//给GPIOE的结构体赋值
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_High_Speed;
-	
 	//根据结构体里的配置,直接写GPIO相关寄存器,完成引脚配置
 	GPIO_InitStructure.GPIO_Pin = led->Pin;
 	GPIO_Init(led->Port, &GPIO_InitStructure);//led1
 }
-
 
 /* 操作灯亮灭的函数 */
 /* 根据 onoff 设置 LED：true 点亮，false 熄灭，使用描述中的有效电平。 */
@@ -75,4 +68,3 @@ void led_off(led_desc_t led)
 //    led_off(2);
 //    led_off(3);
 //}
-

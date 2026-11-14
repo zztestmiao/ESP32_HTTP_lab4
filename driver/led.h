@@ -1,6 +1,5 @@
 #ifndef __LED_H__
 #define __LED_H__
-
 #include <stdbool.h>
 #include <stdint.h>
 #include "stm32f4xx.h"
@@ -13,7 +12,6 @@ struct led_desc
 	BitAction OnBit;	//亮灯
 	BitAction OffBit;	//灭灯
 };
-
 typedef struct led_desc* led_desc_t;
 
 /* 延迟函数 */
@@ -33,5 +31,4 @@ void led_off(led_desc_t led);
 
 /* 灯全灭的函数 */
 //void led_all_off(void);
-
 #endif /* __LED_H__ */
