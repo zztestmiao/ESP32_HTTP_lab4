@@ -13,6 +13,7 @@ volatile uint32_t g_wifi_step;
 volatile uint32_t g_wifi_last_ack;
 char g_wifi_ip[16];
 
+/* 依次配置 WiFi、连接、检查状态和查询 IP，记录失败步骤并输出提示；未启用测试时直接跳过。 */
 void wifi_test_run(void)
 {
 #if WIFI_TEST_ENABLE

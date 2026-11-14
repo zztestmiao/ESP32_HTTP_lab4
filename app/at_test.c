@@ -18,6 +18,7 @@ volatile uint32_t g_gmr_result;
 char g_at_response[256];
 char g_gmr_response[2048];
 
+/* 测试 AT 通信及版本查询，保存结果和应答供 Watch 查看；LED2 表示通过，LED3 表示失败。 */
 void at_test_run(void)
 {
     bool success;

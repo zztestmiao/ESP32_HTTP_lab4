@@ -1,12 +1,14 @@
 #include "uart_link.h"
 #include "stm32f4xx.h"
 
+/* 读取 TIM2 微秒计数。用无符号减法计算耗时，可处理计数回绕。 */
 uint32_t uart_link_us(void)
 {
     return TIM_GetCounter(TIM2);
 }
 
 /* TIM2每微秒计数一次，供串口与AT应答超时使用。 */
+/* 配置 TIM2 每微秒计数一次，供 AT 应答超时使用；时钟无法整分频时返回 false。 */
 static bool uart_timer_init(void)
 {
     RCC_ClocksTypeDef clocks;
@@ -28,6 +30,7 @@ static bool uart_timer_init(void)
     return true;
 }
 
+/* 配置串口复用引脚：PA9/PA10 用于 USART1 日志，PA2/PA3 用于 USART2 AT 通信。 */
 static void uart_io_init(void)
 {
     GPIO_InitTypeDef gpio;
@@ -45,6 +48,7 @@ static void uart_io_init(void)
 }
 
 /* USART1日志与USART2 AT统一使用115200、8N1，无硬件流控。 */
+/* 初始化两个串口：115200 波特率、8 位数据、无校验、1 位停止位，开启收发。 */
 static void uart_usart_init(void)
 {
     USART_InitTypeDef uart;
@@ -59,6 +63,7 @@ static void uart_usart_init(void)
     USART_Cmd(USART2, ENABLE);
 }
 
+/* 开启外设时钟，依次配置计时器、引脚和串口；初始化成功返回 true。 */
 bool uart_link_init(void)
 {
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
@@ -71,7 +76,9 @@ bool uart_link_init(void)
     return true;
 }
 
-/* Blocking transmit; TXE indicates that the data register can accept a byte. */
+/* 向 port 阻塞发送 text，不发送字符串结尾的零；空指针返回 false。
+ * 每字节等待 TXE（发送数据寄存器可写）后写入，硬件异常时可能一直等待。
+ * 返回 true 时最后一个字节已写入寄存器，但可能尚未从引脚发送完毕。 */
 static bool uart_send(USART_TypeDef *port, const char *text)
 {
     if (text == 0)
@@ -85,11 +92,14 @@ static bool uart_send(USART_TypeDef *port, const char *text)
     return true;
 }
 
+/* 通过 USART2 发送 AT 文本，调用者自行添加末尾的回车换行；返回底层发送结果。 */
 bool uart_at_send(const char *text)
 {
     return uart_send(USART2, text);
 }
 
+/* 非阻塞接收：返回 1 表示收到字节并写入 out，0 表示暂无数据，-1 表示参数或接收错误。
+ * 接收错误会被清除，上层应终止本次命令。 */
 int uart_at_receive(uint8_t *out)
 {
     uint32_t sr = USART2->SR;
@@ -107,6 +117,7 @@ int uart_at_receive(uint8_t *out)
     return 1;
 }
 
+/* 通过 USART1 阻塞输出日志，应在 AT 应答接收完成后调用，避免耽误接收。 */
 void uart_log(const char *text)
 {
     (void)uart_send(USART1, text);

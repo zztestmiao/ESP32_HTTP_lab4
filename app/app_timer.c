@@ -4,6 +4,7 @@
 #include "led.h"
 #include "misc.h"
 
+/* 配置 TIM6 每约 0.5 秒触发更新中断并开启中断通道，用 LED1 闪烁表示主控仍在运行。 */
 void app_timer_start(void)
 {
     RCC_ClocksTypeDef clocks;
@@ -43,6 +44,7 @@ void app_timer_start(void)
 }
 
 /* 名字必须与启动文件中的向量表项一致，由硬件中断进入。 */
+/* 定时器中断入口：清除 TIM6 更新标志后翻转 LED1，由硬件自动调用。 */
 void TIM6_DAC_IRQHandler(void)
 {
     if (TIM_GetITStatus(TIM6, TIM_IT_Update) != RESET)

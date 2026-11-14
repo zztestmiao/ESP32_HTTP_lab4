@@ -19,6 +19,7 @@ static bool initialized;
 
 /* 完整行匹配，避免模块回显中的部分字符串被误当终止应答。
  * 普通版本行不匹配，仍保留在rxbuf供上层查看。 */
+/* 识别完整响应行中的 OK、ERROR 和 busy；其他行返回 NONE，继续接收。 */
 static esp_at_result_t esp_at_match_ack(const char *line)
 {
     if (strcmp(line, "OK\r\n") == 0)
@@ -31,9 +32,12 @@ static esp_at_result_t esp_at_match_ack(const char *line)
 }
 
 /* 先清接收状态再发送命令，命令必须包含CRLF；不发送字符串结尾零。
- * timeout_us为真实微秒期限，TIM2提供计时。发送也有底层有限等待。
+ * timeout_us为真实微秒期限，TIM2提供计时。底层发送采用阻塞方式。
  * 每收到一个完整行尝试匹配，溢出/串口错误立即失败，不截断后冒充成功。
  * 返回bool便于业务判断，具体失败原因通过last_result查询。 */
+/* 发送 AT 命令并轮询接收，command 必须包含末尾的回车换行；timeout_us 单位为微秒。
+ * 发送结束后开始应答计时；每收到完整行就检查结果，只有 OK 返回 true。
+ * 超时、模块报错、接收错误或缓冲满均返回 false；rxbuf 和 rxresult 保存本次应答及结果。 */
 static bool esp_at_write_command(const char *command, uint32_t timeout_us)
 {
     uint32_t started;
@@ -82,6 +86,8 @@ static bool esp_at_write_command(const char *command, uint32_t timeout_us)
     return false;
 }
 
+/* 初始化串口和计时器，等待 ESP32 启动 1.5 秒并读走启动信息，再发送 AT 探测。
+ * 探测成功才标记为已初始化并返回 true；不会恢复模块出厂设置。 */
 bool esp_at_init(void)
 {
     uint32_t started;
@@ -102,17 +108,20 @@ bool esp_at_init(void)
     return initialized;
 }
 
+/* 返回最近一次 AT 操作的结果码，用于查询失败原因；不发送命令。 */
 esp_at_result_t esp_at_get_last_result(void)
 {
     return rxresult;
 }
 
+/* 返回内部应答缓冲区的只读指针；下次命令会覆盖内容，长期保留时需复制。 */
 const char *esp_at_get_response(void)
 {
     return rxbuf;
 }
 
 /* 发送之前先确认基础AT探测完成，避免尚未初始化TIM2就调用等待。 */
+/* 检查 AT 探测是否成功；未就绪时设置 UART_ERROR 并返回 false。 */
 static bool esp_at_command_ready(void)
 {
     if (!initialized)
@@ -123,12 +132,14 @@ static bool esp_at_command_ready(void)
     return true;
 }
 
+/* 发送 AT+GMR 查询固件版本；成功返回 true，版本文本从应答缓冲区获取。 */
 bool esp_at_get_version(void)
 {
     return esp_at_command_ready() &&
            esp_at_write_command("AT+GMR\r\n", ESP_AT_COMMAND_TIMEOUT_US);
 }
 
+/* 依次关闭回显、关闭参数持久保存、设置 Station 模式；任一命令失败立即返回 false。 */
 bool esp_at_wifi_init(void)
 {
     if (!esp_at_command_ready())
@@ -141,6 +152,8 @@ bool esp_at_wifi_init(void)
 
 /* 返回转义后的字节数，非法或空间不足返回0xFFFFFFFF。
  * 控制字符会破坏AT文本命令边界，因此拒绝，而不是直接拼接。 */
+/* 转义 WiFi 参数中的逗号、双引号和反斜杠，拒绝控制字符。
+ * capacity 包含结尾零的空间；返回输出字节数，非法字符或空间不足返回 0xFFFFFFFF。 */
 static uint32_t esp_at_escape(char *out, uint32_t capacity, const char *text)
 {
     uint32_t used = 0u;
@@ -164,6 +177,8 @@ static uint32_t esp_at_escape(char *out, uint32_t capacity, const char *text)
     return used;
 }
 
+/* 检查并转义 ssid 和 pwd，发送连接命令，最多等待 45 秒应答；成功返回 true。
+ * 完成后清空含密码的临时数组和应答缓冲区，保留结果码供查询。 */
 bool esp_at_connect_wifi(const char *ssid, const char *pwd)
 {
     char escaped_ssid[65];
@@ -189,6 +204,7 @@ bool esp_at_connect_wifi(const char *ssid, const char *pwd)
     return success;
 }
 
+/* 查询 WiFi 状态；命令成功且状态为 2（已连接并取得 IP）时返回 true。 */
 bool esp_at_is_connected(void)
 {
     const char *line;
@@ -199,6 +215,8 @@ bool esp_at_is_connected(void)
     return line != 0 && sscanf(line, "+CWSTATE:%u", &state) == 1 && state == 2u;
 }
 
+/* 查询并解析 Station 的 IPv4 地址，写入 ip；capacity 至少为 16 字节。
+ * 成功输出以零结尾的点分十进制地址并返回 true；参数、命令或地址无效时返回 false。 */
 bool esp_at_get_ip(char *ip, uint32_t capacity)
 {
     const char *line;

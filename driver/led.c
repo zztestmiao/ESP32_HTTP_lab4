@@ -17,6 +17,7 @@
 #define LED3_PIN  GPIO_Pin_9
 
 /* 延迟函数 */
+/* 空循环粗略延时，时长受主频和编译优化影响，不适合精确计时。 */
 void cpu_delay(void)
 {	
 	uint32_t delay = 6*1000*1000;
@@ -25,6 +26,7 @@ void cpu_delay(void)
 }
 
 /* 3个led初始化的函数 */
+/* 按 led 描述配置推挽输出引脚；调用前需开启对应 GPIO 时钟。 */
 void led_init(led_desc_t led)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
@@ -44,6 +46,7 @@ void led_init(led_desc_t led)
 
 
 /* 操作灯亮灭的函数 */
+/* 根据 onoff 设置 LED：true 点亮，false 熄灭，使用描述中的有效电平。 */
 void led_set(led_desc_t led, bool onoff)
 {
 	if(led == NULL)
@@ -52,12 +55,14 @@ void led_set(led_desc_t led, bool onoff)
 }
 
 /* 指定灯亮的函数 */
+/* 输出 OnBit 指定的电平，点亮指定 LED。 */
 void led_on(led_desc_t led)
 {
 	GPIO_WriteBit(led->Port, led->Pin, led->OnBit);
 }
 
 /* 指定灯灭的函数 */
+/* 输出 OffBit 指定的电平，熄灭指定 LED。 */
 void led_off(led_desc_t led)
 {
 	GPIO_WriteBit(led->Port, led->Pin, led->OffBit);

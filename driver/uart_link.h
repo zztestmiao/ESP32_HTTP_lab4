@@ -9,6 +9,6 @@ uint32_t uart_link_us(void);
 bool uart_at_send(const char *text);
 /* 返回1收到字节、0无数据、-1硬件接收错误；out必须有效。 */
 int uart_at_receive(uint8_t *out);
-/* Blocking USART1 log output; returns after writing the final byte to DR. */
+/* USART1 阻塞日志输出；返回时最后一个字节已写入发送寄存器。 */
 void uart_log(const char *text);
 #endif
