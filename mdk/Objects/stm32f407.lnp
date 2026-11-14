@@ -6,6 +6,8 @@
 ".\objects\at_test.o"
 ".\objects\wifi_test.o"
 ".\objects\http_test.o"
+".\objects\package_stage_test.o"
+".\objects\http_package_test.o"
 ".\objects\http_flash_test.o"
 ".\objects\led.o"
 ".\objects\w25q.o"

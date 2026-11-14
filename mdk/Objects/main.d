@@ -41,4 +41,6 @@
 .\objects\main.o: D:\Keil5\Core\ARM\ARMCC\Bin\..\include\stdbool.h
 .\objects\main.o: ..\driver\esp_at\esp_at.h
 .\objects\main.o: ..\app\http_test.h
+.\objects\main.o: ..\app\http_package_test.h
 .\objects\main.o: ..\app\http_flash_test.h
+.\objects\main.o: ..\app\package_stage_test.h

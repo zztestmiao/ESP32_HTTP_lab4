@@ -1,6 +1,6 @@
 Dependencies for Project 'stm32f407', Target 'stm32f407': (DO NOT MODIFY !)
 CompilerVersion: 5060960::V5.06 update 7 (build 960)::.\ARMCC
-F (..\app\main.c)(0x6AF82787)(--c99 --gnu -c --cpu Cortex-M4.fp.sp -g -O0 --apcs=interwork --split_sections -I ..\firmware\cmsis\core -I ..\firmware\cmsis\device -I ..\firmware\driver\inc -I ..\driver -I ..\app -I ..\driver\esp_at -I ..\driver\console-D__UVISION_VERSION="537" -DSTM32F407xx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DHSE_VALUE="8000000"-o .\objects\main.o --omf_browse .\objects\main.crf --depend .\objects\main.d)
+F (..\app\main.c)(0x6AF83AC0)(--c99 --gnu -c --cpu Cortex-M4.fp.sp -g -O0 --apcs=interwork --split_sections -I ..\firmware\cmsis\core -I ..\firmware\cmsis\device -I ..\firmware\driver\inc -I ..\driver -I ..\app -I ..\driver\esp_at -I ..\driver\console-D__UVISION_VERSION="537" -DSTM32F407xx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DHSE_VALUE="8000000"-o .\objects\main.o --omf_browse .\objects\main.crf --depend .\objects\main.d)
 I (..\firmware\cmsis\device\stm32f4xx.h)(0x6A8ABAAB)
 I (..\firmware\cmsis\core\core_cm4.h)(0x61F12857)
 I (D:\Keil5\Core\ARM\ARMCC\include\stdint.h)(0x6025237E)
@@ -42,7 +42,9 @@ I (..\app\wifi_test.h)(0x6AF81C39)
 I (D:\Keil5\Core\ARM\ARMCC\include\stdbool.h)(0x6025237C)
 I (..\driver\esp_at\esp_at.h)(0x6AF81C39)
 I (..\app\http_test.h)(0x6AF81C39)
+I (..\app\http_package_test.h)(0x6AF83AC0)
 I (..\app\http_flash_test.h)(0x6AF827D2)
+I (..\app\package_stage_test.h)(0x6AF83AC0)
 F (..\app\board.c)(0x6AF81C39)(--c99 --gnu -c --cpu Cortex-M4.fp.sp -g -O0 --apcs=interwork --split_sections -I ..\firmware\cmsis\core -I ..\firmware\cmsis\device -I ..\firmware\driver\inc -I ..\driver -I ..\app -I ..\driver\esp_at -I ..\driver\console-D__UVISION_VERSION="537" -DSTM32F407xx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DHSE_VALUE="8000000"-o .\objects\board.o --omf_browse .\objects\board.crf --depend .\objects\board.d)
 I (..\firmware\cmsis\device\stm32f4xx.h)(0x6A8ABAAB)
 I (..\firmware\cmsis\core\core_cm4.h)(0x61F12857)
@@ -244,7 +246,7 @@ I (..\firmware\driver\inc\stm32f4xx_dcmi.h)(0x61F25A31)
 I (..\firmware\driver\inc\stm32f4xx_fsmc.h)(0x61F25A36)
 F (..\app\http_test.c)(0x6AF82787)(--c99 --gnu -c --cpu Cortex-M4.fp.sp -g -O0 --apcs=interwork --split_sections -I ..\firmware\cmsis\core -I ..\firmware\cmsis\device -I ..\firmware\driver\inc -I ..\driver -I ..\app -I ..\driver\esp_at -I ..\driver\console-D__UVISION_VERSION="537" -DSTM32F407xx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DHSE_VALUE="8000000"-o .\objects\http_test.o --omf_browse .\objects\http_test.crf --depend .\objects\http_test.d)
 I (..\app\http_test.h)(0x6AF81C39)
-I (..\app\http_config.h)(0x6AF81C39)
+I (..\app\http_config.h)(0x6AF8338C)
 I (..\driver\esp_at\esp_at.h)(0x6AF81C39)
 I (D:\Keil5\Core\ARM\ARMCC\include\stdbool.h)(0x6025237C)
 I (D:\Keil5\Core\ARM\ARMCC\include\stdint.h)(0x6025237E)
@@ -284,6 +286,22 @@ I (..\firmware\driver\inc\stm32f4xx_can.h)(0x61F25A2E)
 I (..\firmware\driver\inc\stm32f4xx_dac.h)(0x61F25A30)
 I (..\firmware\driver\inc\stm32f4xx_dcmi.h)(0x61F25A31)
 I (..\firmware\driver\inc\stm32f4xx_fsmc.h)(0x61F25A36)
+I (D:\Keil5\Core\ARM\ARMCC\include\stdio.h)(0x60252374)
+F (..\app\package_stage_test.c)(0x6AF83AC0)(--c99 --gnu -c --cpu Cortex-M4.fp.sp -g -O0 --apcs=interwork --split_sections -I ..\firmware\cmsis\core -I ..\firmware\cmsis\device -I ..\firmware\driver\inc -I ..\driver -I ..\app -I ..\driver\esp_at -I ..\driver\console-D__UVISION_VERSION="537" -DSTM32F407xx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DHSE_VALUE="8000000"-o .\objects\package_stage_test.o --omf_browse .\objects\package_stage_test.crf --depend .\objects\package_stage_test.d)
+I (..\app\package_stage_test.h)(0x6AF83AC0)
+I (..\app\http_package_test.h)(0x6AF83AC0)
+I (D:\Keil5\Core\ARM\ARMCC\include\stdbool.h)(0x6025237C)
+I (D:\Keil5\Core\ARM\ARMCC\include\stdint.h)(0x6025237E)
+I (..\driver\w25q.h)(0x6AF472DA)
+I (..\driver\console\console.h)(0x6AF81C39)
+I (D:\Keil5\Core\ARM\ARMCC\include\stdio.h)(0x60252374)
+F (..\app\http_package_test.c)(0x6AF83AC0)(--c99 --gnu -c --cpu Cortex-M4.fp.sp -g -O0 --apcs=interwork --split_sections -I ..\firmware\cmsis\core -I ..\firmware\cmsis\device -I ..\firmware\driver\inc -I ..\driver -I ..\app -I ..\driver\esp_at -I ..\driver\console-D__UVISION_VERSION="537" -DSTM32F407xx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DHSE_VALUE="8000000"-o .\objects\http_package_test.o --omf_browse .\objects\http_package_test.crf --depend .\objects\http_package_test.d)
+I (..\app\http_package_test.h)(0x6AF83AC0)
+I (D:\Keil5\Core\ARM\ARMCC\include\stdbool.h)(0x6025237C)
+I (D:\Keil5\Core\ARM\ARMCC\include\stdint.h)(0x6025237E)
+I (..\app\http_config.h)(0x6AF8338C)
+I (..\driver\esp_at\esp_at.h)(0x6AF81C39)
+I (..\driver\console\console.h)(0x6AF81C39)
 I (D:\Keil5\Core\ARM\ARMCC\include\stdio.h)(0x60252374)
 F (..\app\http_flash_test.c)(0x6AF827D2)(--c99 --gnu -c --cpu Cortex-M4.fp.sp -g -O0 --apcs=interwork --split_sections -I ..\firmware\cmsis\core -I ..\firmware\cmsis\device -I ..\firmware\driver\inc -I ..\driver -I ..\app -I ..\driver\esp_at -I ..\driver\console-D__UVISION_VERSION="537" -DSTM32F407xx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DHSE_VALUE="8000000"-o .\objects\http_flash_test.o --omf_browse .\objects\http_flash_test.crf --depend .\objects\http_flash_test.d)
 I (..\app\http_flash_test.h)(0x6AF827D2)

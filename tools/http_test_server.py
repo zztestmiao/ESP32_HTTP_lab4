@@ -1,4 +1,4 @@
-"""只提供probe.bin，禁止目录列表和其他文件，Ctrl+C停止。"""
+"""只提供probe.bin和LED_V2.ota，禁止目录列表和其他文件，Ctrl+C停止。"""
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 import argparse
@@ -13,10 +13,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_HEAD(self):
         self.reply(True)
     def reply(self, head):
-        if self.path != "/probe.bin":
+        if self.path not in ("/probe.bin", "/LED_V2.ota"):
             self.send_error(404)
             return
-        data = (Path(__file__).resolve().parents[1] / "http_files/probe.bin").read_bytes()
+        data = (Path(__file__).resolve().parents[1] / ("http_files/" + self.path[1:])).read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", "application/octet-stream")
         self.send_header("Content-Length", str(len(data)))
@@ -28,5 +28,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
-    print("HTTP test server, port", args.port, "only /probe.bin", flush=True)
+    print("HTTP test server, port", args.port, "only /probe.bin and /LED_V2.ota", flush=True)
     ThreadingHTTPServer(("0.0.0.0", args.port), Handler).serve_forever()

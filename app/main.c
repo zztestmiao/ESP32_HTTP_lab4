@@ -6,7 +6,9 @@
 #include "wifi_test.h"
 #include "esp_at.h"
 #include "http_test.h"
+#include "http_package_test.h"
 #include "http_flash_test.h"
+#include "package_stage_test.h"
 
 /* 程序入口：初始化 LED，执行 AT 和版本测试，通过后测试 WiFi，最后启动 LED 心跳并循环等待。 */
 int main(void)
@@ -21,11 +23,15 @@ int main(void)
     if (wifi_test_passed())
     {
         http_test_run();
+        /* AT接收失败后不能继续命令，只有上一轮正常结束才下载固件包。 */
+        if (esp_at_get_last_result() == ESP_AT_RESULT_OK)
+            http_package_test_run();
     }
     /* 失败也会启动LED1心跳；具体结果看日志及LED2/LED3。 */
     app_timer_start();
     while (1)
     {
         http_flash_test_poll();
+        package_stage_test_poll();
     }
 }

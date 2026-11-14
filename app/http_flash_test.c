@@ -36,6 +36,7 @@ void http_flash_test_poll(void)
         g_http_flash_result = 3u;
         goto fail;
     }
+    
     w25q_init();
     if (!w25q_read_jedec_id(1u, &id) || id != 0xEF4018u ||
         !w25q_wait_ready(1u, TEST_POLLS) ||
@@ -72,6 +73,7 @@ void http_flash_test_poll(void)
         g_http_flash_result = 4u;
         goto fail;
     }
+    
     for (i = 0u; i < TEST_SIZE; ++i)
         if (g_http_flash_readback[i] != g_http_data[i]) ++g_http_flash_mismatch;
     if (g_http_flash_mismatch != 0u)
