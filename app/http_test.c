@@ -23,7 +23,7 @@ static uint32_t http_test_crc(const uint8_t *data, uint32_t length)
 {
     uint32_t crc = 0xFFFFFFFFu;
     uint32_t i, bit;
-    /* 每个字节参与8轮位运算，CRC与测试图样规则无关。 */
+    /* 前8字节按特制图样，其余为下标低8位，逐字节检查漏字节或错位。 */
     for (i = 0u; i < length; ++i)
     {
         crc ^= data[i];
@@ -45,6 +45,7 @@ void http_test_run(void)
     console_write("[HTTP] GET ");
     console_write(HTTP_TEST_URL);
     console_write("\r\n");
+
     /* 先完整接收；失败时buffer可能只有部分数据，不进入比较。 */
     if (!esp_at_http_get(HTTP_TEST_URL, g_http_data, sizeof(g_http_data), &length))
     {
@@ -52,6 +53,7 @@ void http_test_run(void)
         g_http_result = 2u;
         goto fail;
     }
+    
     g_http_ack = (uint32_t)esp_at_get_last_result();
     g_http_bytes = length;
     /* AT成功不等于文件正确，先严格匹配已知测试文件长度。 */
